@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "847506481862",
+    "project_id": "streamvod-62917",
+    "storage_bucket": "streamvod-62917.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:847506481862:android:01d5cdeb02b63732b1adc7",
+        "android_client_info": {
+          "package_name": "com.groupe9.streamvod"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGXdbSD8Yb7ov5DZR3UJwpWMjlFGKTWJw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
