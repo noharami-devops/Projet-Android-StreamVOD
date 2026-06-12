@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.groupe9.streamvod.ui.theme.Primary
+import androidx.compose.material.icons.filled.Search
 
 sealed class BottomNavItem(
     val route: String,
@@ -15,6 +16,9 @@ sealed class BottomNavItem(
     val label: String
 ) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Accueil")
+
+    object Search : BottomNavItem("search", Icons.Default.Search, "Recherche")
+
     object Favorites : BottomNavItem("favorites", Icons.Default.Favorite, "Favoris")
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Profil")
 }
@@ -29,6 +33,7 @@ fun BottomNavBar(
     ) {
         val items = listOf(
             BottomNavItem.Home,
+            BottomNavItem.Search,
             BottomNavItem.Favorites,
             BottomNavItem.Profile
         )

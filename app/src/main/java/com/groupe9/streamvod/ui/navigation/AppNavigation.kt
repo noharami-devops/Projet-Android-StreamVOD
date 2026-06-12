@@ -14,6 +14,7 @@ import com.groupe9.streamvod.ui.detail.DetailScreen
 import com.groupe9.streamvod.ui.home.HomeScreen
 import com.groupe9.streamvod.ui.profile.ProfileScreen
 import com.groupe9.streamvod.ui.favorites.FavoritesScreen
+import com.groupe9.streamvod.ui.search.SearchScreen
 
 @Composable
 fun AppNavigation() {
@@ -21,7 +22,7 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute in listOf("home", "favorites", "profile")
+    val showBottomBar = currentRoute in listOf("home", "search", "favorites", "profile")
 
     Scaffold(
         bottomBar = {
@@ -70,6 +71,13 @@ fun AppNavigation() {
             }
             composable("home") {
                 HomeScreen(
+                    onMovieClick = { movieId ->
+                        navController.navigate("detail/$movieId")
+                    }
+                )
+            }
+            composable("search") {
+                SearchScreen(
                     onMovieClick = { movieId ->
                         navController.navigate("detail/$movieId")
                     }
