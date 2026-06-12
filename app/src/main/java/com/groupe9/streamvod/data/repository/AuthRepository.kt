@@ -33,4 +33,5 @@ class AuthRepository @Inject constructor() {
     fun logout() {
         auth.signOut()
     }
+
 }
