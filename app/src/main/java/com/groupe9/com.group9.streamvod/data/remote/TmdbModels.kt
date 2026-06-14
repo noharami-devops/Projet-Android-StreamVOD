@@ -24,6 +24,7 @@ data class TmdbMovie(
     val releaseDate: String
 )
 
+
 // Convertir TmdbMovie en Video
 fun TmdbMovie.toVideo(): com.groupe9.streamvod.domain.model.Video {
     return com.groupe9.streamvod.domain.model.Video(
@@ -36,3 +37,16 @@ fun TmdbMovie.toVideo(): com.groupe9.streamvod.domain.model.Video {
         releaseDate = releaseDate
     )
 }
+data class TmdbVideosResponse(
+    @SerializedName("results")
+    val results: List<TmdbVideo>
+)
+
+data class TmdbVideo(
+    @SerializedName("key")
+    val key: String,
+    @SerializedName("site")
+    val site: String,
+    @SerializedName("type")
+    val type: String
+)

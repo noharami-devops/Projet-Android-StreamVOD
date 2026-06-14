@@ -53,4 +53,27 @@ class VideoRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun getMovieTrailer(movieId: Int): Result<String?> {
+        return try {
+            val response = apiService.getMovieVideos(
+                movieId = movieId,
+                apiKey = "db5ab02bd48fcf4faa542c554adcdcb2"
+            )
+            println("DEBUG VIDEOS COUNT: ${response.results.size}")
+            val trailer = response.results.firstOrNull {
+                it.site == "YouTube" && it.type == "Trailer"
+            } ?: response.results.firstOrNull {
+                it.site == "YouTube" && it.type == "Teaser"
+            } ?: response.results.firstOrNull {
+                it.site == "YouTube"
+            }
+            println("DEBUG TRAILER FOUND: $trailer")
+            Result.success(trailer?.key)
+        } catch (e: Exception) {
+            println("DEBUG EXCEPTION CLASS: ${e.javaClass.simpleName}")
+            println("DEBUG EXCEPTION MSG: ${e.message}")
+            Result.failure(e)
+        }
+    }
 }

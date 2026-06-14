@@ -12,5 +12,6 @@ data class FavoriteEntity(
     val backdropUrl: String,
     val rating: Double,
     val releaseDate: String,
-    val description: String
+    val description: String,
+    val videoUrl: String = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"  // ← ajouter
 )

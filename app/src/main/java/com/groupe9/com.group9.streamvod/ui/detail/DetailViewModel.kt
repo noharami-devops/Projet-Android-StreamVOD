@@ -57,4 +57,16 @@ class DetailViewModel @Inject constructor(
             }
         }
     }
+    fun openTrailer(context: android.content.Context) {
+        viewModelScope.launch {
+            val result = videoRepository.getMovieTrailer(_uiState.value.video?.id ?: return@launch)
+            result.getOrNull()?.let { key ->
+                val intent = android.content.Intent(
+                    android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("https://www.youtube.com/watch?v=$key")
+                )
+                context.startActivity(intent)
+            }
+        }
+    }
 }

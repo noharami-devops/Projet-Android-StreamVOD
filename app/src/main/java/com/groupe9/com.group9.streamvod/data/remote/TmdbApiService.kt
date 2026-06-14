@@ -34,4 +34,11 @@ interface TmdbApiService {
         @Query("api_key") apiKey: String,
         @Query("language") language: String = "fr-FR"
     ): TmdbMovie
+
+    @GET("movie/{movie_id}/videos")
+    suspend fun getMovieVideos(
+        @Path("movie_id") movieId: Int,
+        @Query("api_key") apiKey: String,
+        @Query("language") language: String = "fr-FR"
+    ): TmdbVideosResponse
 }

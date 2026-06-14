@@ -40,7 +40,9 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "streamvod_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides

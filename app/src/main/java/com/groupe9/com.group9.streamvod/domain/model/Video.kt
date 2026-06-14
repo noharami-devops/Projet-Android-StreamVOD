@@ -8,5 +8,6 @@ data class Video(
     val backdropUrl: String,
     val rating: Double,
     val releaseDate: String,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val videoUrl: String = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
 )

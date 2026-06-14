@@ -37,7 +37,8 @@ fun FavoriteEntity.toVideo() = Video(
     backdropUrl = backdropUrl,
     rating = rating,
     releaseDate = releaseDate,
-    description = description
+    description = description,
+    videoUrl = videoUrl
 )
 
 fun Video.toEntity() = FavoriteEntity(
@@ -47,5 +48,6 @@ fun Video.toEntity() = FavoriteEntity(
     backdropUrl = backdropUrl,
     rating = rating,
     releaseDate = releaseDate,
-    description = description
+    description = description,
+    videoUrl = videoUrl
 )

@@ -15,6 +15,7 @@ import com.groupe9.streamvod.ui.home.HomeScreen
 import com.groupe9.streamvod.ui.profile.ProfileScreen
 import com.groupe9.streamvod.ui.favorites.FavoritesScreen
 import com.groupe9.streamvod.ui.search.SearchScreen
+import com.groupe9.streamvod.ui.player.PlayerScreen
 
 @Composable
 fun AppNavigation() {
@@ -87,7 +88,10 @@ fun AppNavigation() {
                 val movieId = backStackEntry.arguments?.getString("movieId")?.toInt() ?: 0
                 DetailScreen(
                     movieId = movieId,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onWatchClick = { id ->
+                        navController.navigate("player/$id")
+                    }
                 )
             }
             composable("favorites") {
@@ -104,6 +108,13 @@ fun AppNavigation() {
                             popUpTo("home") { inclusive = true }
                         }
                     }
+                )
+            }
+            composable("player/{movieId}") { backStackEntry ->
+                val movieId = backStackEntry.arguments?.getString("movieId")?.toInt() ?: 0
+                PlayerScreen(
+                    movieId = movieId,
+                    onBackClick = { navController.popBackStack() }
                 )
             }
         }

@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.groupe9.streamvod.ui.theme.*
 
@@ -21,7 +22,8 @@ import com.groupe9.streamvod.ui.theme.*
 fun DetailScreen(
     movieId: Int,
     onBackClick: () -> Unit,
-    viewModel: DetailViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    onWatchClick: (Int) -> Unit,
+    viewModel: DetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -134,17 +136,19 @@ fun DetailScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         // Bouton regarder
+                        val context = androidx.compose.ui.platform.LocalContext.current
+
                         Button(
-                            onClick = { },
+                            onClick = {
+                                viewModel.openTrailer(context)
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Primary
-                            )
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary)
                         ) {
                             Text(
-                                text = "▶ Regarder",
+                                text = "▶ Voir la bande-annonce",
                                 style = MaterialTheme.typography.titleMedium
                             )
                         }
