@@ -1,5 +1,6 @@
 package com.groupe9.streamvod.ui.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
@@ -16,6 +17,8 @@ import com.groupe9.streamvod.ui.profile.ProfileScreen
 import com.groupe9.streamvod.ui.favorites.FavoritesScreen
 import com.groupe9.streamvod.ui.search.SearchScreen
 import com.groupe9.streamvod.ui.player.PlayerScreen
+import com.groupe9.streamvod.ui.community.CommunityScreen
+import com.groupe9.streamvod.ui.community.StreamPlayerScreen
 
 @Composable
 fun AppNavigation() {
@@ -23,7 +26,7 @@ fun AppNavigation() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val showBottomBar = currentRoute in listOf("home", "search", "favorites", "profile")
+    val showBottomBar = currentRoute in listOf("home", "search", "community", "favorites", "profile")
 
     Scaffold(
         bottomBar = {
@@ -114,6 +117,22 @@ fun AppNavigation() {
                 val movieId = backStackEntry.arguments?.getString("movieId")?.toInt() ?: 0
                 PlayerScreen(
                     movieId = movieId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("community") {
+                CommunityScreen(
+                    onVideoClick = { videoUrl ->
+                        navController.navigate("stream/${Uri.encode(videoUrl)}")
+                    }
+                )
+            }
+            composable("stream/{videoUrl}") { backStackEntry ->
+                val videoUrl = Uri.decode(
+                    backStackEntry.arguments?.getString("videoUrl") ?: ""
+                )
+                StreamPlayerScreen(
+                    videoUrl = videoUrl,
                     onBackClick = { navController.popBackStack() }
                 )
             }

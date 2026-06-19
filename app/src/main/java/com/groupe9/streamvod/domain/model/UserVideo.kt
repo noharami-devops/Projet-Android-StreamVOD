@@ -6,6 +6,7 @@ data class UserVideo(
     val description: String = "",
     val videoUrl: String = "",
     val uploaderEmail: String = "",
+    val uploaderName: String = "", // Ajoute cette ligne
     val uploaderId: String = "",
     val likes: Int = 0,
     val timestamp: Long = System.currentTimeMillis()
