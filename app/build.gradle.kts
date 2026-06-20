@@ -58,18 +58,18 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.3")
     implementation("androidx.activity:activity-compose:1.9.0")
-    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation(platform("androidx.compose:compose-bom:2025.05.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")  // ← AJOUTÉ (icônes)
+    implementation("androidx.compose.material:material-icons-extended")
 
     // Retrofit + OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")                 // ← AJOUTÉ
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")   // ← AJOUTÉ (logs réseau)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.51.1")
@@ -95,18 +95,18 @@ dependencies {
     // Hilt Navigation
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-    // ExoPlayer (streaming vidéo)           ← AJOUTÉ
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-    implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
-    implementation("androidx.media3:media3-ui:1.3.1")
+    // ExoPlayer
+    implementation("androidx.media3:media3-exoplayer:1.4.1")
+    implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
+    implementation("androidx.media3:media3-ui:1.4.1")
 
-    // Google Sign-In (SSO)                  ← AJOUTÉ
+    // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.2.0")
 
-    // Coroutines                             ← AJOUTÉ
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 
-    // Splash Screen                          ← AJOUTÉ
+    // Splash Screen
     implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Firebase
@@ -121,8 +121,4 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
-
-
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

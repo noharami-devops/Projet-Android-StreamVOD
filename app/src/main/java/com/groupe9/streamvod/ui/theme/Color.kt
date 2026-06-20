@@ -13,3 +13,4 @@ val OnBackground = Color(0xFFFFFFFF)
 val OnSurface = Color(0xFFFFFFFF)
 val TextSecondary = Color(0xFFAAAAAA)  // Texte gris
 val Accent = Color(0xFFFFD700)         // Or pour les favoris
+val TextPrimary = Color(0xFF000000)
