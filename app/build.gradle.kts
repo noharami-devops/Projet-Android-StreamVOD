@@ -30,6 +30,16 @@ android {
             "TMDB_BASE_URL",
             "\"https://api.themoviedb.org/3/\""
         )
+        buildConfigField(
+            "String",
+            "CLOUDINARY_CLOUD_NAME",
+            "\"dp4pmmir1\""
+        )
+        buildConfigField(
+            "String",
+            "CLOUDINARY_UPLOAD_PRESET",
+            "\"streamvod_unsigned\""
+        )
     }
 
     buildTypes {

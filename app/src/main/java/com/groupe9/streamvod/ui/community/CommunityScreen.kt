@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.groupe9.streamvod.domain.model.UserVideo
 import com.groupe9.streamvod.ui.theme.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun CommunityScreen(
@@ -29,7 +30,11 @@ fun CommunityScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showUploadDialog by remember { mutableStateOf(false) }
     var selectedVideoUri by remember { mutableStateOf<Uri?>(null) }
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
+
+    // Pour afficher les erreurs visiblement
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -45,87 +50,109 @@ fun CommunityScreen(
             showUploadDialog = false
             selectedVideoUri = null
             viewModel.resetUploadState()
+            scope.launch {
+                snackbarHostState.showSnackbar("Vidéo publiée avec succès !")
+            }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(Background)) {
-        Column(modifier = Modifier.fillMaxSize()) {
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "🎥 Communauté",
-                    style = MaterialTheme.typography.displayLarge,
-                    color = Primary
-                )
-                FloatingActionButton(
-                    onClick = { videoPicker.launch("video/*") },
-                    containerColor = Primary,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Uploader une vidéo", tint = OnPrimary)
-                }
-            }
-
-            when {
-                uiState.isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Primary)
-                    }
-                }
-                uiState.videos.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Default.VideoLibrary,
-                                contentDescription = null,
-                                tint = TextSecondary,
-                                modifier = Modifier.size(64.dp)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text("Aucune vidéo pour l'instant", color = TextSecondary)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text("Soyez le premier à partager !", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
-                }
-                else -> {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(uiState.videos) { video ->
-                            UserVideoCard(
-                                video = video,
-                                onVideoClick = onVideoClick,
-                                onLikeClick = { viewModel.toggleLike(video.id, video.likes) }
-                            )
-                        }
-                    }
-                }
+    // ⚠️ NOUVEAU : afficher l'erreur dès qu'elle apparaît, peu importe où
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { message ->
+            scope.launch {
+                snackbarHostState.showSnackbar("Erreur : $message")
             }
         }
+    }
 
-        if (showUploadDialog && selectedVideoUri != null) {
-            UploadVideoDialog(
-                isUploading = uiState.isUploading,
-                onUpload = { title, description ->
-                    viewModel.uploadVideo(
-                        context = context,
-                        uri = selectedVideoUri!!,
-                        title = title,
-                        description = description
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Background
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Background)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🎥 Communauté",
+                        style = MaterialTheme.typography.displayLarge,
+                        color = Primary
                     )
-                },
-                onDismiss = {
-                    showUploadDialog = false
-                    selectedVideoUri = null
-                    viewModel.resetUploadState()
+                    FloatingActionButton(
+                        onClick = { videoPicker.launch("video/*") },
+                        containerColor = Primary,
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Uploader une vidéo", tint = OnPrimary)
+                    }
                 }
-            )
+
+                when {
+                    uiState.isLoading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = Primary)
+                        }
+                    }
+                    uiState.videos.isEmpty() -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.VideoLibrary,
+                                    contentDescription = null,
+                                    tint = TextSecondary,
+                                    modifier = Modifier.size(64.dp)
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text("Aucune vidéo pour l'instant", color = TextSecondary)
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Soyez le premier à partager !", color = TextSecondary, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                    else -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(uiState.videos) { video ->
+                                UserVideoCard(
+                                    video = video,
+                                    onVideoClick = onVideoClick,
+                                    onLikeClick = { viewModel.toggleLike(video.id, video.likes) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (showUploadDialog && selectedVideoUri != null) {
+                UploadVideoDialog(
+                    isUploading = uiState.isUploading,
+                    onUpload = { title, description ->
+                        viewModel.uploadVideo(
+                            context = context,
+                            uri = selectedVideoUri!!,
+                            title = title,
+                            description = description
+                        )
+                    },
+                    onDismiss = {
+                        showUploadDialog = false
+                        selectedVideoUri = null
+                        viewModel.resetUploadState()
+                    }
+                )
+            }
         }
     }
 }

@@ -23,7 +23,11 @@ class UserVideoRepository @Inject constructor(
         val listener = firestore.collection("user_videos")
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
+                if (error != null) {
+                    // Important : ne plus avaler l'erreur silencieusement
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val videos = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject(UserVideo::class.java)?.copy(id = doc.id)
                 } ?: emptyList()
@@ -49,6 +53,9 @@ class UserVideoRepository @Inject constructor(
                 description = description,
                 videoUrl = videoUrl,
                 uploaderEmail = user.email ?: "Anonyme",
+                uploaderName = user.displayName?.takeIf { it.isNotBlank() }
+                    ?: user.email?.substringBefore("@")
+                    ?: "Anonyme",
                 uploaderId = user.uid,
                 timestamp = System.currentTimeMillis()
             )
