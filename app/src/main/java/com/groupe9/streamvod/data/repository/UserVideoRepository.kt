@@ -76,4 +76,33 @@ class UserVideoRepository @Inject constructor(
             Result.failure(e)
         }
     }
+    suspend fun deleteVideo(videoId: String, uploaderId: String): Result<Unit> {
+        return try {
+            val currentUser = auth.currentUser ?: throw Exception("Non connecté")
+            if (currentUser.uid != uploaderId) {
+                throw Exception("Vous ne pouvez supprimer que vos propres vidéos")
+            }
+            firestore.collection("user_videos").document(videoId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    fun getUserVideosByUploader(uploaderId: String): Flow<List<UserVideo>> = callbackFlow {
+        val listener = firestore.collection("user_videos")
+            .whereEqualTo("uploaderId", uploaderId)
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val videos = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(UserVideo::class.java)?.copy(id = doc.id)
+                } ?: emptyList()
+                trySend(videos)
+            }
+        awaitClose { listener.remove() }
+    }
 }

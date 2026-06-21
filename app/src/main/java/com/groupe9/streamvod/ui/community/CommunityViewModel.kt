@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.google.firebase.auth.FirebaseAuth
 
 @HiltViewModel
 class CommunityViewModel @Inject constructor(
@@ -64,5 +65,19 @@ class CommunityViewModel @Inject constructor(
 
     fun resetUploadState() {
         _uiState.value = _uiState.value.copy(uploadSuccess = false, errorMessage = null)
+    }
+    val currentUserId: String?
+        get() = FirebaseAuth.getInstance().currentUser?.uid
+
+    fun deleteVideo(videoId: String, uploaderId: String) {
+        viewModelScope.launch {
+            val result = userVideoRepository.deleteVideo(videoId, uploaderId)
+            result.fold(
+                onSuccess = {},
+                onFailure = { e ->
+                    _uiState.value = _uiState.value.copy(errorMessage = e.message)
+                }
+            )
+        }
     }
 }
