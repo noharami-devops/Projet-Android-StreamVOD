@@ -1,5 +1,7 @@
 package com.groupe9.streamvod.ui.community
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,10 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.groupe9.streamvod.domain.model.UserVideo
 import com.groupe9.streamvod.ui.theme.*
 import kotlinx.coroutines.launch
+import java.io.File
 
 @Composable
 fun CommunityScreen(
@@ -30,18 +35,64 @@ fun CommunityScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showUploadDialog by remember { mutableStateOf(false) }
     var selectedVideoUri by remember { mutableStateOf<Uri?>(null) }
+    var showSourceDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Pour afficher les erreurs visiblement
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // 1. Choisir depuis la galerie
     val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
             selectedVideoUri = it
             showUploadDialog = true
+        }
+    }
+
+    // 2. Filmer avec la caméra
+    var cameraVideoUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CaptureVideo()
+    ) { success ->
+        if (success && cameraVideoUri != null) {
+            selectedVideoUri = cameraVideoUri
+            showUploadDialog = true
+        }
+    }
+
+    fun launchCamera() {
+        val videoFile = File(context.cacheDir, "camera_${System.currentTimeMillis()}.mp4")
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            videoFile
+        )
+        cameraVideoUri = uri
+        cameraLauncher.launch(uri)
+    }
+
+    // 2.bis Demande de permission caméra (obligatoire avant d'ouvrir la caméra)
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Permission caméra refusée")
+            }
+        }
+    }
+
+    fun checkCameraPermissionAndLaunch() {
+        val permission = Manifest.permission.CAMERA
+        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+            launchCamera()
+        } else {
+            cameraPermissionLauncher.launch(permission)
         }
     }
 
@@ -56,7 +107,7 @@ fun CommunityScreen(
         }
     }
 
-    // ⚠️ NOUVEAU : afficher l'erreur dès qu'elle apparaît, peu importe où
+    // afficher l'erreur dès qu'elle apparaît, peu importe où
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             scope.launch {
@@ -88,11 +139,11 @@ fun CommunityScreen(
                         color = Primary
                     )
                     FloatingActionButton(
-                        onClick = { videoPicker.launch("video/*") },
+                        onClick = { showSourceDialog = true },
                         containerColor = Primary,
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Uploader une vidéo", tint = OnPrimary)
+                        Icon(Icons.Default.Add, contentDescription = "Ajouter une vidéo", tint = OnPrimary)
                     }
                 }
 
@@ -133,6 +184,35 @@ fun CommunityScreen(
                         }
                     }
                 }
+            }
+
+            // Dialog de choix : Galerie ou Caméra
+            if (showSourceDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSourceDialog = false },
+                    title = { Text("Ajouter une vidéo") },
+                    text = { Text("Choisissez une source") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            showSourceDialog = false
+                            checkCameraPermissionAndLaunch()
+                        }) {
+                            Icon(Icons.Default.Videocam, contentDescription = null, tint = Primary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Filmer", color = Primary)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            showSourceDialog = false
+                            videoPicker.launch("video/*")
+                        }) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = Primary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Galerie", color = Primary)
+                        }
+                    }
+                )
             }
 
             if (showUploadDialog && selectedVideoUri != null) {
