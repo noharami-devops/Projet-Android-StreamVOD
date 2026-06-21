@@ -177,8 +177,10 @@ fun CommunityScreen(
                             items(uiState.videos) { video ->
                                 UserVideoCard(
                                     video = video,
+                                    currentUserId = viewModel.currentUserId,
                                     onVideoClick = onVideoClick,
-                                    onLikeClick = { viewModel.toggleLike(video.id, video.likes) }
+                                    onLikeClick = { viewModel.toggleLike(video.id, video.likes) },
+                                    onDeleteClick = { viewModel.deleteVideo(video.id, video.uploaderId) }
                                 )
                             }
                         }
@@ -240,9 +242,14 @@ fun CommunityScreen(
 @Composable
 fun UserVideoCard(
     video: UserVideo,
+    currentUserId: String?,
     onVideoClick: (String) -> Unit,
-    onLikeClick: () -> Unit
+    onLikeClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    val isOwner = currentUserId != null && currentUserId == video.uploaderId
+
     Card(
         onClick = { onVideoClick(video.videoUrl) },
         modifier = Modifier.fillMaxWidth(),
@@ -250,13 +257,33 @@ fun UserVideoCard(
         colors = CardDefaults.cardColors(containerColor = Surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = video.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = TextPrimary,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = video.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                if (isOwner) {
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Supprimer",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
             if (video.description.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -287,8 +314,28 @@ fun UserVideoCard(
             }
         }
     }
-}
 
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Supprimer la vidéo ?") },
+            text = { Text("Cette action est irréversible.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    onDeleteClick()
+                }) {
+                    Text("Supprimer", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Annuler", color = TextSecondary)
+                }
+            }
+        )
+    }
+}
 @Composable
 fun UploadVideoDialog(
     isUploading: Boolean,
