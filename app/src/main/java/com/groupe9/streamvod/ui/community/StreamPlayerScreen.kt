@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -22,9 +24,15 @@ import androidx.media3.ui.PlayerView
 @Composable
 fun StreamPlayerScreen(
     videoUrl: String,
-    onBackClick: () -> Unit
+    title: String,
+    onBackClick: () -> Unit,
+    viewModel: StreamPlayerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
+
+    LaunchedEffect(videoUrl) {
+        viewModel.recordView(videoUrl, title)
+    }
 
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
@@ -57,20 +65,25 @@ fun StreamPlayerScreen(
             }
         )
 
-        IconButton(
-            onClick = {
-                exoPlayer.pause()
-                onBackClick()
-            },
+        Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(all = 8.dp)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Retour",
-                tint = Color.White
-            )
+            IconButton(
+                onClick = {
+                    exoPlayer.pause()
+                    onBackClick()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Retour",
+                    tint = Color.White
+                )
+            }
+            Text(text = title, color = Color.White)
         }
     }
 }

@@ -19,6 +19,8 @@ import com.groupe9.streamvod.ui.search.SearchScreen
 import com.groupe9.streamvod.ui.player.PlayerScreen
 import com.groupe9.streamvod.ui.community.CommunityScreen
 import com.groupe9.streamvod.ui.community.StreamPlayerScreen
+import com.groupe9.streamvod.ui.community.MyVideosScreen
+import com.groupe9.streamvod.ui.history.HistoryScreen
 
 @Composable
 fun AppNavigation() {
@@ -110,6 +112,12 @@ fun AppNavigation() {
                         navController.navigate("login") {
                             popUpTo("home") { inclusive = true }
                         }
+                    },
+                    onMyVideosClick = {
+                        navController.navigate("my_videos")
+                    },
+                    onHistoryClick = {
+                        navController.navigate("history")
                     }
                 )
             }
@@ -122,18 +130,42 @@ fun AppNavigation() {
             }
             composable("community") {
                 CommunityScreen(
-                    onVideoClick = { videoUrl ->
-                        navController.navigate("stream/${Uri.encode(videoUrl)}")
+                    onVideoClick = { videoUrl, title ->
+                        navController.navigate("stream/${Uri.encode(videoUrl)}/${Uri.encode(title)}")
                     }
                 )
             }
-            composable("stream/{videoUrl}") { backStackEntry ->
-                val videoUrl = Uri.decode(
-                    backStackEntry.arguments?.getString("videoUrl") ?: ""
-                )
+            composable("stream/{videoUrl}/{title}") { backStackEntry ->
+                val videoUrl = Uri.decode(backStackEntry.arguments?.getString("videoUrl") ?: "")
+                val title = Uri.decode(backStackEntry.arguments?.getString("title") ?: "Vidéo")
                 StreamPlayerScreen(
                     videoUrl = videoUrl,
+                    title = title,
                     onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("my_videos") {
+                MyVideosScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onVideoClick = { videoUrl, title ->
+                        navController.navigate("stream/${Uri.encode(videoUrl)}/${Uri.encode(title)}")
+                    }
+                )
+            }
+            composable("history") {
+                HistoryScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onItemClick = { item ->
+                        if (item.type == "movie") {
+                            val movieId = item.itemId.removePrefix("movie_").toIntOrNull()
+                            if (movieId != null) {
+                                navController.navigate("detail/$movieId")
+                            }
+                        } else {
+                            val videoUrl = item.itemId.removePrefix("uservideo_")
+                            navController.navigate("stream/${Uri.encode(videoUrl)}/${Uri.encode(item.title)}")
+                        }
+                    }
                 )
             }
         }

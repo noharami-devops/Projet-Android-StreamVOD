@@ -13,6 +13,7 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
+import com.groupe9.streamvod.data.local.HistoryDao
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -43,6 +44,11 @@ object AppModule {
         )
             .fallbackToDestructiveMigration()
             .build()
+    }
+    @Provides
+    @Singleton
+    fun provideHistoryDao(database: AppDatabase): HistoryDao {
+        return database.historyDao()
     }
 
     @Provides

@@ -29,7 +29,7 @@ import java.io.File
 
 @Composable
 fun CommunityScreen(
-    onVideoClick: (String) -> Unit = {},
+    onVideoClick: (String, String) -> Unit = { _, _ -> },
     viewModel: CommunityViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -178,7 +178,7 @@ fun CommunityScreen(
                                 UserVideoCard(
                                     video = video,
                                     currentUserId = viewModel.currentUserId,
-                                    onVideoClick = onVideoClick,
+                                    onVideoClick = { onVideoClick(video.videoUrl, video.title) },
                                     onLikeClick = { viewModel.toggleLike(video.id, video.likes) },
                                     onDeleteClick = { viewModel.deleteVideo(video.id, video.uploaderId) }
                                 )
@@ -243,7 +243,7 @@ fun CommunityScreen(
 fun UserVideoCard(
     video: UserVideo,
     currentUserId: String?,
-    onVideoClick: (String) -> Unit,
+    onVideoClick: () -> Unit,
     onLikeClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -251,7 +251,7 @@ fun UserVideoCard(
     val isOwner = currentUserId != null && currentUserId == video.uploaderId
 
     Card(
-        onClick = { onVideoClick(video.videoUrl) },
+        onClick = onVideoClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Surface)
