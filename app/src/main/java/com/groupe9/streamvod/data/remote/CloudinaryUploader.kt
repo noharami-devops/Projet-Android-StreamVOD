@@ -10,15 +10,26 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class CloudinaryUploader @Inject constructor() {
 
-    private val client = OkHttpClient()
+    private val loggingInterceptor = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.HEADERS
+    }
+
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(120, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .addInterceptor(loggingInterceptor) // logs complets visibles dans Logcat (tag OkHttp)
+        .build()
 
     suspend fun uploadVideo(context: Context, uri: Uri): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -38,17 +49,19 @@ class CloudinaryUploader @Inject constructor() {
 
             val request = Request.Builder()
                 .url("https://api.cloudinary.com/v1_1/${BuildConfig.CLOUDINARY_CLOUD_NAME}/video/upload")
+                .addHeader("User-Agent", "StreamVOD-Android/1.0")
                 .post(requestBody)
                 .build()
 
             val response = client.newCall(request).execute()
+            val responseBody = response.body?.string()
             tempFile.delete()
 
             if (!response.isSuccessful) {
-                throw Exception("Échec de l'upload : ${response.code}")
+                throw Exception("Échec de l'upload (${response.code}) : $responseBody")
             }
 
-            val json = JSONObject(response.body?.string() ?: "{}")
+            val json = JSONObject(responseBody ?: "{}")
             val secureUrl = json.getString("secure_url")
             Result.success(secureUrl)
         } catch (e: Exception) {
