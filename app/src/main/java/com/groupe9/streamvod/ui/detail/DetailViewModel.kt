@@ -3,6 +3,7 @@ package com.groupe9.streamvod.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.groupe9.streamvod.data.repository.FavoriteRepository
+import com.groupe9.streamvod.data.repository.HistoryRepository
 import com.groupe9.streamvod.data.repository.VideoRepository
 import com.groupe9.streamvod.domain.model.Video
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DetailViewModel @Inject constructor(
     private val videoRepository: VideoRepository,
-    private val favoriteRepository: FavoriteRepository
+    private val favoriteRepository: FavoriteRepository,
+    private val historyRepository: HistoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DetailUiState())
@@ -31,6 +33,13 @@ class DetailViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         video = video
+                    )
+                    // Enregistrer dans l'historique
+                    historyRepository.addToHistory(
+                        itemId = "movie_${video.id}",
+                        title = video.title,
+                        imageUrl = video.posterUrl,
+                        type = "movie"
                     )
                 },
                 onFailure = { e ->
@@ -57,6 +66,7 @@ class DetailViewModel @Inject constructor(
             }
         }
     }
+
     fun openTrailer(context: android.content.Context) {
         viewModelScope.launch {
             val result = videoRepository.getMovieTrailer(_uiState.value.video?.id ?: return@launch)
