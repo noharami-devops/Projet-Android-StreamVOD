@@ -76,4 +76,15 @@ class VideoRepository @Inject constructor(
             Result.failure(e)
         }
     }
+    suspend fun getMovieRecommendations(movieId: Int): Result<List<Video>> {
+        return try {
+            val response = apiService.getMovieRecommendations(
+                movieId = movieId,
+                apiKey = "db5ab02bd48fcf4faa542c554adcdcb2"
+            )
+            Result.success(response.results.map { it.toVideo() })
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -96,6 +96,9 @@ fun AppNavigation() {
                     onBackClick = { navController.popBackStack() },
                     onWatchClick = { id ->
                         navController.navigate("player/$id")
+                    },
+                    onRecommendationClick = { id ->
+                        navController.navigate("detail/$id")
                     }
                 )
             }
