@@ -3,6 +3,7 @@ package com.groupe9.streamvod.data.repository
 import android.content.Context
 import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.groupe9.streamvod.data.remote.CloudinaryUploader
@@ -24,7 +25,6 @@ class UserVideoRepository @Inject constructor(
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    // Important : ne plus avaler l'erreur silencieusement
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
@@ -48,15 +48,25 @@ class UserVideoRepository @Inject constructor(
             val uploadResult = cloudinaryUploader.uploadVideo(context, uri)
             val videoUrl = uploadResult.getOrThrow()
 
+            // Générer le thumbnail depuis l'URL Cloudinary
+            val thumbnailUrl = videoUrl
+                .replace("/video/upload/", "/video/upload/so_0/")
+                .replace(".mp4", ".jpg")
+                .replace(".mov", ".jpg")
+                .replace(".avi", ".jpg")
+
             val userVideo = UserVideo(
                 title = title,
                 description = description,
                 videoUrl = videoUrl,
+                thumbnailUrl = thumbnailUrl,
                 uploaderEmail = user.email ?: "Anonyme",
                 uploaderName = user.displayName?.takeIf { it.isNotBlank() }
                     ?: user.email?.substringBefore("@")
                     ?: "Anonyme",
                 uploaderId = user.uid,
+                likes = 0,
+                likedBy = emptyList(),
                 timestamp = System.currentTimeMillis()
             )
             firestore.collection("user_videos").add(userVideo).await()
@@ -67,15 +77,26 @@ class UserVideoRepository @Inject constructor(
         }
     }
 
-    suspend fun toggleLike(videoId: String, currentLikes: Int): Result<Unit> {
+    suspend fun toggleLike(videoId: String, userId: String, likedBy: List<String>): Result<Unit> {
         return try {
-            firestore.collection("user_videos").document(videoId)
-                .update("likes", currentLikes + 1).await()
+            val docRef = firestore.collection("user_videos").document(videoId)
+            if (likedBy.contains(userId)) {
+                docRef.update(
+                    "likes", FieldValue.increment(-1),
+                    "likedBy", FieldValue.arrayRemove(userId)
+                ).await()
+            } else {
+                docRef.update(
+                    "likes", FieldValue.increment(1),
+                    "likedBy", FieldValue.arrayUnion(userId)
+                ).await()
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
     suspend fun deleteVideo(videoId: String, uploaderId: String): Result<Unit> {
         return try {
             val currentUser = auth.currentUser ?: throw Exception("Non connecté")

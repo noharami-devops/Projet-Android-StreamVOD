@@ -5,9 +5,11 @@ data class UserVideo(
     val title: String = "",
     val description: String = "",
     val videoUrl: String = "",
+    val thumbnailUrl: String = "",
     val uploaderEmail: String = "",
-    val uploaderName: String = "", // Ajoute cette ligne
+    val uploaderName: String = "",
     val uploaderId: String = "",
     val likes: Int = 0,
+    val likedBy: List<String> = emptyList(),
     val timestamp: Long = System.currentTimeMillis()
 )
