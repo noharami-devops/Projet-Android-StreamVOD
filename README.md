@@ -6,8 +6,8 @@
 
 | Nom & Prénom | Rôle |
 |---|---|
-| Rami Noha | Développeuse Backend (Firebase, Cloudinary, Room) |
-| Asrih Fatima Azahrae | Développeuse Frontend (UI Compose, Navigation, Communauté) |
+| Rami Noha | Développeuse Backend(Firebase, Cloudinary, Room) et Frontend(UI Compose, Navigation, Communauté) |
+| Asrih Fatima Azahrae | Développeuse Backend (Firebase, Cloudinary, Room)et Frontend(UI Compose, Navigation, Communauté)  |
 
 ---
 
