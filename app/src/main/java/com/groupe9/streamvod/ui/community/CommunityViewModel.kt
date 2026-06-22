@@ -4,13 +4,13 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.groupe9.streamvod.data.repository.UserVideoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.google.firebase.auth.FirebaseAuth
 
 @HiltViewModel
 class CommunityViewModel @Inject constructor(
@@ -19,6 +19,9 @@ class CommunityViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CommunityUiState())
     val uiState: StateFlow<CommunityUiState> = _uiState
+
+    val currentUserId: String?
+        get() = FirebaseAuth.getInstance().currentUser?.uid
 
     init {
         loadVideos()
@@ -57,17 +60,12 @@ class CommunityViewModel @Inject constructor(
         }
     }
 
-    fun toggleLike(videoId: String, currentLikes: Int) {
+    fun toggleLike(videoId: String, likedBy: List<String>) {
+        val userId = currentUserId ?: return
         viewModelScope.launch {
-            userVideoRepository.toggleLike(videoId, currentLikes)
+            userVideoRepository.toggleLike(videoId, userId, likedBy)
         }
     }
-
-    fun resetUploadState() {
-        _uiState.value = _uiState.value.copy(uploadSuccess = false, errorMessage = null)
-    }
-    val currentUserId: String?
-        get() = FirebaseAuth.getInstance().currentUser?.uid
 
     fun deleteVideo(videoId: String, uploaderId: String) {
         viewModelScope.launch {
@@ -79,5 +77,9 @@ class CommunityViewModel @Inject constructor(
                 }
             )
         }
+    }
+
+    fun resetUploadState() {
+        _uiState.value = _uiState.value.copy(uploadSuccess = false, errorMessage = null)
     }
 }

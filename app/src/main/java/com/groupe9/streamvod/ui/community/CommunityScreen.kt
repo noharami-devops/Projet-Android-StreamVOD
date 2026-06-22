@@ -16,12 +16,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.groupe9.streamvod.domain.model.UserVideo
 import com.groupe9.streamvod.ui.theme.*
 import kotlinx.coroutines.launch
@@ -37,12 +40,9 @@ fun CommunityScreen(
     var selectedVideoUri by remember { mutableStateOf<Uri?>(null) }
     var showSourceDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-
-    // Pour afficher les erreurs visiblement
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // 1. Choisir depuis la galerie
     val videoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -52,7 +52,6 @@ fun CommunityScreen(
         }
     }
 
-    // 2. Filmer avec la caméra
     var cameraVideoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CaptureVideo()
@@ -74,7 +73,6 @@ fun CommunityScreen(
         cameraLauncher.launch(uri)
     }
 
-    // 2.bis Demande de permission caméra (obligatoire avant d'ouvrir la caméra)
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -107,7 +105,6 @@ fun CommunityScreen(
         }
     }
 
-    // afficher l'erreur dès qu'elle apparaît, peu importe où
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             scope.launch {
@@ -127,7 +124,6 @@ fun CommunityScreen(
                 .background(Background)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -143,7 +139,7 @@ fun CommunityScreen(
                         containerColor = Primary,
                         modifier = Modifier.size(48.dp)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Ajouter une vidéo", tint = OnPrimary)
+                        Icon(Icons.Default.Add, contentDescription = "Ajouter", tint = OnPrimary)
                     }
                 }
 
@@ -179,7 +175,7 @@ fun CommunityScreen(
                                     video = video,
                                     currentUserId = viewModel.currentUserId,
                                     onVideoClick = { onVideoClick(video.videoUrl, video.title) },
-                                    onLikeClick = { viewModel.toggleLike(video.id, video.likes) },
+                                    onLikeClick = { viewModel.toggleLike(video.id, video.likedBy) },
                                     onDeleteClick = { viewModel.deleteVideo(video.id, video.uploaderId) }
                                 )
                             }
@@ -188,7 +184,6 @@ fun CommunityScreen(
                 }
             }
 
-            // Dialog de choix : Galerie ou Caméra
             if (showSourceDialog) {
                 AlertDialog(
                     onDismissRequest = { showSourceDialog = false },
@@ -249,6 +244,7 @@ fun UserVideoCard(
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
     val isOwner = currentUserId != null && currentUserId == video.uploaderId
+    val isLiked = currentUserId != null && video.likedBy.contains(currentUserId)
 
     Card(
         onClick = onVideoClick,
@@ -256,60 +252,103 @@ fun UserVideoCard(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(
-                    text = video.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+        Column {
+            // Thumbnail
+            if (video.thumbnailUrl.isNotBlank()) {
+                AsyncImage(
+                    model = video.thumbnailUrl,
+                    contentDescription = video.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                    contentScale = ContentScale.Crop
                 )
-                if (isOwner) {
-                    IconButton(
-                        onClick = { showDeleteConfirm = true },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Supprimer",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(SurfaceVariant)
+                        .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.PlayCircle,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(48.dp)
+                    )
                 }
             }
-            if (video.description.isNotBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = video.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Par ${video.uploaderName}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onLikeClick, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Favorite, contentDescription = "Like", tint = Primary, modifier = Modifier.size(18.dp))
+
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Text(
+                        text = video.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = OnBackground,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    if (isOwner) {
+                        IconButton(
+                            onClick = { showDeleteConfirm = true },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                contentDescription = "Supprimer",
+                                tint = TextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
-                    Text(text = "${video.likes}", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                }
+
+                if (video.description.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = video.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Par ${video.uploaderName}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onLikeClick, modifier = Modifier.size(32.dp)) {
+                            Icon(
+                                imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = "Like",
+                                tint = if (isLiked) Primary else TextSecondary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Text(
+                            text = "${video.likes}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary
+                        )
+                    }
                 }
             }
         }
@@ -336,6 +375,7 @@ fun UserVideoCard(
         )
     }
 }
+
 @Composable
 fun UploadVideoDialog(
     isUploading: Boolean,
@@ -377,7 +417,7 @@ fun UploadVideoDialog(
                 )
                 if (isUploading) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Upload en cours...", color = TextSecondary, style = MaterialTheme.typography.bodyMedium)
+                    Text("Upload en cours...", color = TextSecondary)
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = Primary)
                 }
