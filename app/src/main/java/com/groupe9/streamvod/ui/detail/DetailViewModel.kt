@@ -55,6 +55,17 @@ class DetailViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(isFavorite = isFav)
             }
         }
+
+        // Charger les recommandations (en parallèle, indépendant du reste)
+        viewModelScope.launch {
+            val result = videoRepository.getMovieRecommendations(movieId)
+            result.fold(
+                onSuccess = { recommendations ->
+                    _uiState.value = _uiState.value.copy(recommendations = recommendations)
+                },
+                onFailure = {}
+            )
+        }
     }
 
     fun toggleFavorite(video: Video) {
